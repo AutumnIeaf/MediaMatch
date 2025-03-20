@@ -64,6 +64,7 @@ def index():
 @app.route('/search', methods=['POST'])
 def search():
     query = request.form.get('query')
+    # default all
     media_type = request.form.get('media_type', 'all')
 
     if not query:

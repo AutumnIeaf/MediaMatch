@@ -126,130 +126,164 @@
       <!-- pass information script -->
       <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const synopsisForm = document.querySelector('form[action="/search"]');
+      const synopsisForm = document.querySelector('form[action="/search"]');
+      
+      if (synopsisForm) {
+        // Update the form action to use the absolute URL if not on localhost
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const apiBaseUrl = isLocalhost ? '' : 'http://4300showcase.infosci.cornell.edu:5235/'; // Replace with your actual server domain
         
-        if (synopsisForm) {
-          synopsisForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Update the form action attribute
+        if (!isLocalhost) {
+          synopsisForm.action = `${apiBaseUrl}/search`;
+        }
+        
+        synopsisForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          const query = document.querySelector('textarea[name="synopsis"]').value;
+          
+          if (!query) {
+            alert('Please enter text to search');
+            return;
+          }
+          
+          let loadingIndicator = document.createElement('div');
+          loadingIndicator.id = 'loading';
+          loadingIndicator.innerHTML = 'Finding recommendations...';
+          loadingIndicator.style.color = 'white';
+          loadingIndicator.style.marginTop = '15px';
+          loadingIndicator.style.fontStyle = 'italic';
+          
+          let resultsContainer = document.getElementById('results');
+          if (!resultsContainer) {
+            resultsContainer = document.createElement('div');
+            resultsContainer.id = 'results';
+            resultsContainer.style.marginTop = '30px';
+            synopsisForm.after(resultsContainer);
+          } else {
+            resultsContainer.innerHTML = '';
+          }
+          
+          synopsisForm.after(loadingIndicator);
+          
+          const mediaType = document.querySelector('input[name="media_type"]:checked')?.value || 'all';
+          
+          // Use the correct API URL based on environment
+          const searchUrl = isLocalhost ? '/search' : `${apiBaseUrl}/search`;
+          
+          // Log the request for debugging
+          console.log(`Sending request to: ${searchUrl}`);
+          console.log(`Query: ${query}`);
+          console.log(`Media Type: ${mediaType}`);
+          
+          fetch(searchUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `query=${encodeURIComponent(query)}&media_type=${encodeURIComponent(mediaType)}`,
+            credentials: 'include', // Include credentials like cookies if needed
+            mode: 'cors' // Enable CORS for cross-domain requests
+          })
+          .then(response => {
+            // Log response status for debugging
+            console.log(`Response status: ${response.status}`);
+            console.log(`Response headers:`, response.headers);
             
-            const query = document.querySelector('textarea[name="synopsis"]').value;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              return response.json();
+            } else {
+              // For more detailed error message
+              return response.text().then(text => {
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned non-JSON response. Check the console for details.');
+              });
+            }
+          })
+          .then(data => {
+            if (document.getElementById('loading')) {
+              document.getElementById('loading').remove();
+            }
             
-            if (!query) {
-              alert('Please enter text to search');
+            // Log data for debugging
+            console.log('Received data:', data);
+            
+            if (data.error) {
+              resultsContainer.innerHTML = `<div class="alert-error" style="color: #ff6b6b; padding: 15px; background-color: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); margin-bottom: 15px;">${data.error}</div>`;
               return;
             }
             
-            let loadingIndicator = document.createElement('div');
-            loadingIndicator.id = 'loading';
-            loadingIndicator.innerHTML = 'Finding recommendations...';
-            loadingIndicator.style.color = 'white';
-            loadingIndicator.style.marginTop = '15px';
-            loadingIndicator.style.fontStyle = 'italic';
-            
-            let resultsContainer = document.getElementById('results');
-            if (!resultsContainer) {
-              resultsContainer = document.createElement('div');
-              resultsContainer.id = 'results';
-              resultsContainer.style.marginTop = '30px';
-              synopsisForm.after(resultsContainer);
-            } else {
-              resultsContainer.innerHTML = '';
+            if (!data.results || data.results.length === 0) {
+              resultsContainer.innerHTML = `<div class="alert-info" style="color: #ffffff; padding: 15px; background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); margin-bottom: 15px;">No recommendations found. Try a different search term.</div>`;
+              return;
             }
             
-            synopsisForm.after(loadingIndicator);
+            // Create a grid for results
+            const resultsGrid = document.createElement('div');
+            resultsGrid.style.display = 'grid';
+            resultsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            resultsGrid.style.gap = '20px';
+            resultsGrid.style.marginTop = '20px';
             
-            const mediaType = document.querySelector('input[name="media_type"]:checked')?.value || 'all';
-            
-            fetch('/search', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: `query=${encodeURIComponent(query)}&media_type=${encodeURIComponent(mediaType)}`
-            })
-            .then(response => {
-              const contentType = response.headers.get('content-type');
-              if (contentType && contentType.includes('application/json')) {
-                return response.json();
-              } else {
-                throw new Error('Server returned non-JSON response. The server might be returning HTML or text instead of JSON.');
-              }
-            })
-            .then(data => {
-              if (document.getElementById('loading')) {
-                document.getElementById('loading').remove();
-              }
+            data.results.forEach(result => {
+              const card = document.createElement('div');
+              card.className = `media-card ${result.media_type || ''}`;
+              card.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+              card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+              card.style.padding = '20px';
               
-              if (data.error) {
-                resultsContainer.innerHTML = `<div class="alert-error" style="color: #ff6b6b; padding: 15px; background-color: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); margin-bottom: 15px;">${data.error}</div>`;
-                return;
-              }
+              const score = result.score ? Math.round(result.score * 100) : '?';
               
-              if (!data.results || data.results.length === 0) {
-                resultsContainer.innerHTML = `<div class="alert-info" style="color: #ffffff; padding: 15px; background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); margin-bottom: 15px;">No recommendations found. Try a different search term.</div>`;
-                return;
-              }
-              
-              // Create a grid for results
-              const resultsGrid = document.createElement('div');
-              resultsGrid.style.display = 'grid';
-              resultsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-              resultsGrid.style.gap = '20px';
-              resultsGrid.style.marginTop = '20px';
-              
-              data.results.forEach(result => {
-                const card = document.createElement('div');
-                card.className = `media-card ${result.media_type || ''}`;
-                card.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-                card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-                card.style.padding = '20px';
-                
-                const score = result.score ? Math.round(result.score * 100) : '?';
-                
-                card.innerHTML = `
-                  <div class="card-content">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                      <h3 style="margin: 0; color: white; font-size: 18px;">${result.title || 'Untitled'}</h3>
-                      <span style="background-color: rgba(255, 255, 255, 0.2); color: white; padding: 4px 8px; font-size: 14px;">${score}% match</span>
-                    </div>
-                    <h4 style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-top: 0; margin-bottom: 10px;">
-                      ${result.media_type ? (result.media_type.charAt(0).toUpperCase() + result.media_type.slice(1)) : 'Unknown'} 
-                      ${result.genre ? '| ' + result.genre : ''}
-                    </h4>
-                    <p style="color: rgba(255, 255, 255, 0.9); font-size: 14px; line-height: 1.5;">
-                      ${result.description ? (result.description.length > 150 ? result.description.substring(0, 150) + '...' : result.description) : 'No description available'}
-                    </p>
+              card.innerHTML = `
+                <div class="card-content">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0; color: white; font-size: 18px;">${result.title || 'Untitled'}</h3>
+                    <span style="background-color: rgba(255, 255, 255, 0.2); color: white; padding: 4px 8px; font-size: 14px;">${score}% match</span>
                   </div>
-                `;
-                
-                resultsGrid.appendChild(card);
-              });
-              
-              resultsContainer.appendChild(resultsGrid);
-            })
-            .catch(error => {
-              // removel loading indicator
-              if (document.getElementById('loading')) {
-                document.getElementById('loading').remove();
-              }
-              
-              resultsContainer.innerHTML = `
-                <div class="alert-error" style="color: #ff6b6b; padding: 15px; background-color: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); margin-bottom: 15px;">
-                  <p><strong>Error:</strong> ${error.message || 'An unknown error occurred'}</p>
-                  <p>This could happen if:</p>
-                  <ul style="margin-left: 20px; margin-top: 5px;">
-                    <li>The server is returning HTML instead of JSON</li>
-                    <li>The endpoint is not properly configured to return JSON</li>
-                    <li>There's a server-side error in processing your request</li>
-                  </ul>
+                  <h4 style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-top: 0; margin-bottom: 10px;">
+                    ${result.media_type ? (result.media_type.charAt(0).toUpperCase() + result.media_type.slice(1)) : 'Unknown'} 
+                    ${result.genre ? '| ' + result.genre : ''}
+                  </h4>
+                  <p style="color: rgba(255, 255, 255, 0.9); font-size: 14px; line-height: 1.5;">
+                    ${result.description ? (result.description.length > 150 ? result.description.substring(0, 150) + '...' : result.description) : 'No description available'}
+                  </p>
                 </div>
               `;
+              
+              resultsGrid.appendChild(card);
             });
+            
+            resultsContainer.appendChild(resultsGrid);
+          })
+          .catch(error => {
+            console.error('Error details:', error);
+            
+            if (document.getElementById('loading')) {
+              document.getElementById('loading').remove();
+            }
+            
+            resultsContainer.innerHTML = `
+              <div class="alert-error" style="color: #ff6b6b; padding: 15px; background-color: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); margin-bottom: 15px;">
+                <p><strong>Error:</strong> ${error.message || 'An unknown error occurred'}</p>
+                <p>This could happen if:</p>
+                <ul style="margin-left: 20px; margin-top: 5px;">
+                  <li>The server is not accessible from your current domain (CORS issue)</li>
+                  <li>The server is down or unreachable</li>
+                  <li>The endpoint URL is incorrect</li>
+                  <li>The server is returning HTML instead of JSON</li>
+                  <li>There's a server-side error in processing your request</li>
+                </ul>
+                <p>Check the browser console (F12) for more detailed error information.</p>
+              </div>
+            `;
           });
-        } else {
-          console.error('Form with action="/search" not found on page');
-        }
-      });
+        });
+      } else {
+        console.error('Form with action="/search" not found on page');
+      }
+    });
     </script>
   </body>
 </html>
