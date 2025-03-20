@@ -1,54 +1,255 @@
-<!doctype html>
-<title>{% block title %}{% endblock %} - Flaskr</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kanit&family=Montserrat&family=Open+Sans:wght@500&display=swap" rel="stylesheet">
-<body>
-    <div class="full-body-container">
-        <div class="top-text">
-            <div class="google-colors">
-                <h1 id="google-4">4</h1>
-                <h1 id="google-3">3</h1>
-                <h1 id="google-0-1">0</h1>
-                <h1 id="google-0-2">0</h1>
-            </div>
-            <div class="input-box" onclick="sendFocus()">
-                <img src="{{ url_for('static', filename='images/mag.png') }}" />
-                <input placeholder="Search for a Keeping up with the Kardashians episode" id="filter-text-val" onkeyup="filterText()">
-            </div>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>MediaMatch</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="./static/assets/css/essential.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="./static/assets/css/style.css">
+    <link href="https://uploads-ssl.webflow.com/63a4d61127f93641d7ae56a7/63b878ca4b43c75ee8c6b487_icon-32.png" rel="shortcut icon" type="image/x-icon">
+    <link href="https://uploads-ssl.webflow.com/63a4d61127f93641d7ae56a7/63b878cce27f73545d106479_icon-256.png" rel="apple-touch-icon">
+    <link rel="stylesheet" href="./static/assets/css/swiper-bundle.min.css">
+    <link rel="stylesheet" href="./static/assets/css/popup.css">
+  </head>
+  <body class="dark-theme">
+    <div class="page-wrapper">
+      <div class="sec h-hero-sec">
+        <div class="nav">
+          <div class="container nav-container">
+            <a>
+              <div class="brand-logo w-embed">
+                <svg id="esUqO4CI2Ku1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 54 54" fill="currentColor" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+                  </g>
+                </svg>
+              </div>
+          </div>
         </div>
-        <div id="answer-box">
-
+        <div class="sec">
+          <div class="container">
+            <div class="h-hero-header">
+              <h1 class="f-100">It's time to turn your</h1>
+              <div id="hero-anim" class="h-hero-header-highlight-wrapper">
+                <div class="h-hero-header-highlight">
+                  <div class="hero-highlight-wrapper left-1" style="display: none; width: 0px;">
+                    <div class="hero-highlight">
+                      <h1 class="f-100 f-white">ideas</h1>
+                    </div>
+                  </div>
+                  <div class="hero-highlight-wrapper left-2" style="display: none; width: 0px;">
+                    <div class="hero-highlight left-2">
+                      <h1 class="f-100 f-white">thoughts</h1>
+                    </div>
+                  </div>
+                </div>
+                <div class="h-hero-header-highlight-w">
+                  <div class="h-hero-header-arrow w-embed">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 73 38">
+                      <path fill-rule="evenodd" d="m70.02 16.175 2.972 2.972-2.972 2.971-15.85 15.85-2.97-2.972 13.747-13.748H.817v-4.203h64.13L51.199 3.298 54.171.326l15.849 15.85Z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                  <div class="h-hero-header-highlight">
+                    <div class="hero-highlight-wrapper right-1" style="display: none; width: 0px;">
+                      <div class="hero-highlight">
+                        <h1 class="f-100 f-white">books</h1>
+                      </div>
+                    </div>
+                    <div class="hero-highlight-wrapper right-2" style="display: block; width: auto;">
+                      <div class="hero-highlight left-2">
+                        <h1 class="f-100 f-white">movies</h1>
+                      </div>
+                    </div>
+                    <div class="hero-highlight-wrapper right-3" style="display: none; width: 0px;">
+                      <div class="hero-highlight left-3">
+                        <h1 class="f-100 f-white">games</h1>
+                      </div>
+                    </div>
+                    <div class="hero-highlight-wrapper right-4" style="display: none; width: 0px;">
+                      <div class="hero-highlight left-4">
+                        <h1 class="f-100 f-white">shows</h1>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <h1 class="f-100">with MediaMatch.</h1>
+            <div class="h-hero-p">
+                <p class="f-30">Discover your next favorite stories across all media with personalized recommendations.</p>
+                <br>
+                <p>*Based on your unique preferences.</p>
+                <div class="input-wrapper" style="margin-top: 30px; margin-bottom: 30px;">
+                    <form action="/search" method="post">
+                      <textarea 
+                        placeholder="Enter a synopsis to discover similar content..." 
+                        style="width: 100%; 
+                        padding: 18px; 
+                        border-radius: 0px; /* Square corners */
+                        background-color: rgba(255, 255, 255, 0.03); 
+                        border: 2px solid rgba(255, 255, 255, 0.7); /* White outline */
+                        color: #fff;
+                        font-size: 16px;
+                        min-height: 120px;
+                        transition: all 0.3s ease;
+                        resize: vertical;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);"
+                        onfocus="this.style.borderColor='rgba(255, 255, 255, 1)'; this.style.boxShadow='0 4px 20px rgba(255, 255, 255, 0.15)';" 
+                        onblur="this.style.borderColor='rgba(255, 255, 255, 0.7)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.1)';"
+                        name="synopsis"></textarea>
+                      <div style="display: flex; justify-content: flex-start; margin-top: 12px;">
+                        <button type="submit" 
+                        style="padding: 12px 24px; 
+                        background-color: transparent; /* Transparent background */
+                        color: white; 
+                        border: 2px solid rgba(255, 255, 255, 0.7); /* White outline */
+                        border-radius: 0px; /* Square corners */
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        float: left;"
+                        onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(255, 255, 255, 1)';" 
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='rgba(255, 255, 255, 0.7)';">
+                        Get Recommendations
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+               
+              </div>
+              <div class="h-hero-btn">
+          </div>
         </div>
-    </div>
-
-    <script>
-
-        function answerBoxTemplate(title,titleDesc){
-            return `<div class=''>
-                <h3 class='episode-title'>${title}</h3>
-                <p class='episode-desc'>${titleDesc}</p>
-            </div>`
-        }
-
-        function sendFocus(){
-            document.getElementById('filter-text-val').focus()
-        }
-
-        function filterText(){
-            document.getElementById("answer-box").innerHTML = ""
-            console.log(document.getElementById("filter-text-val").value)
-            fetch("/episodes?" + new URLSearchParams({ title: document.getElementById("filter-text-val").value }).toString())
-            .then((response) => response.json())
-            .then((data) => data.forEach(row => {
-                
-                let tempDiv = document.createElement("div")
-                tempDiv.innerHTML = answerBoxTemplate(row.title,row.descr)
-                document.getElementById("answer-box").appendChild(tempDiv)
-            }));
-
-        }
+      </div>
+      <div class="padding-top padding-120"></div>
+      <script src="./static/assets/js/gsap.min.js"></script>
+      <script src="./static/assets/js/index.js"></script>
+      
+      <!-- pass information script -->
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const synopsisForm = document.querySelector('form[action="/search"]');
+        
+        if (synopsisForm) {
+          synopsisForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
+            const query = document.querySelector('textarea[name="synopsis"]').value;
+            
+            if (!query) {
+              alert('Please enter text to search');
+              return;
+            }
+            
+            let loadingIndicator = document.createElement('div');
+            loadingIndicator.id = 'loading';
+            loadingIndicator.innerHTML = 'Finding recommendations...';
+            loadingIndicator.style.color = 'white';
+            loadingIndicator.style.marginTop = '15px';
+            loadingIndicator.style.fontStyle = 'italic';
+            
+            let resultsContainer = document.getElementById('results');
+            if (!resultsContainer) {
+              resultsContainer = document.createElement('div');
+              resultsContainer.id = 'results';
+              resultsContainer.style.marginTop = '30px';
+              synopsisForm.after(resultsContainer);
+            } else {
+              resultsContainer.innerHTML = '';
+            }
+            
+            synopsisForm.after(loadingIndicator);
+            
+            const mediaType = document.querySelector('input[name="media_type"]:checked')?.value || 'all';
+            
+            fetch('/search', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: `query=${encodeURIComponent(query)}&media_type=${encodeURIComponent(mediaType)}`
+            })
+            .then(response => {
+              const contentType = response.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                return response.json();
+              } else {
+                throw new Error('Server returned non-JSON response. The server might be returning HTML or text instead of JSON.');
+              }
+            })
+            .then(data => {
+              if (document.getElementById('loading')) {
+                document.getElementById('loading').remove();
+              }
+              
+              if (data.error) {
+                resultsContainer.innerHTML = `<div class="alert-error" style="color: #ff6b6b; padding: 15px; background-color: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); margin-bottom: 15px;">${data.error}</div>`;
+                return;
+              }
+              
+              if (!data.results || data.results.length === 0) {
+                resultsContainer.innerHTML = `<div class="alert-info" style="color: #ffffff; padding: 15px; background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); margin-bottom: 15px;">No recommendations found. Try a different search term.</div>`;
+                return;
+              }
+              
+              // Create a grid for results
+              const resultsGrid = document.createElement('div');
+              resultsGrid.style.display = 'grid';
+              resultsGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+              resultsGrid.style.gap = '20px';
+              resultsGrid.style.marginTop = '20px';
+              
+              data.results.forEach(result => {
+                const card = document.createElement('div');
+                card.className = `media-card ${result.media_type || ''}`;
+                card.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                card.style.padding = '20px';
+                
+                const score = result.score ? Math.round(result.score * 100) : '?';
+                
+                card.innerHTML = `
+                  <div class="card-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                      <h3 style="margin: 0; color: white; font-size: 18px;">${result.title || 'Untitled'}</h3>
+                      <span style="background-color: rgba(255, 255, 255, 0.2); color: white; padding: 4px 8px; font-size: 14px;">${score}% match</span>
+                    </div>
+                    <h4 style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-top: 0; margin-bottom: 10px;">
+                      ${result.media_type ? (result.media_type.charAt(0).toUpperCase() + result.media_type.slice(1)) : 'Unknown'} 
+                      ${result.genre ? '| ' + result.genre : ''}
+                    </h4>
+                    <p style="color: rgba(255, 255, 255, 0.9); font-size: 14px; line-height: 1.5;">
+                      ${result.description ? (result.description.length > 150 ? result.description.substring(0, 150) + '...' : result.description) : 'No description available'}
+                    </p>
+                  </div>
+                `;
+                
+                resultsGrid.appendChild(card);
+              });
+              
+              resultsContainer.appendChild(resultsGrid);
+            })
+            .catch(error => {
+              // removel loading indicator
+              if (document.getElementById('loading')) {
+                document.getElementById('loading').remove();
+              }
+              
+              resultsContainer.innerHTML = `
+                <div class="alert-error" style="color: #ff6b6b; padding: 15px; background-color: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3); margin-bottom: 15px;">
+                  <p><strong>Error:</strong> ${error.message || 'An unknown error occurred'}</p>
+                  <p>This could happen if:</p>
+                  <ul style="margin-left: 20px; margin-top: 5px;">
+                    <li>The server is returning HTML instead of JSON</li>
+                    <li>The endpoint is not properly configured to return JSON</li>
+                    <li>There's a server-side error in processing your request</li>
+                  </ul>
+                </div>
+              `;
+            });
+          });
+        } else {
+          console.error('Form with action="/search" not found on page');
+        }
+      });
     </script>
-</body>
+  </body>
+</html>
