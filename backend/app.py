@@ -32,6 +32,7 @@ app = Flask(__name__)
 CORS(app)
 
 nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords', quiet=True)
 
 try:
