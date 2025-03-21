@@ -31,6 +31,9 @@ mysql_engine = MySQLDatabaseHandler(
 app = Flask(__name__)
 CORS(app)
 
+nltk.download('punkt')
+nltk.download('stopwords', quiet=True)
+
 try:
     nltk.data.find('tokenizers/punkt')
     nltk.data.find('corpora/stopwords')
