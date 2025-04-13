@@ -88,7 +88,9 @@ def load_and_clean_data():
     if 'genres' in games_df.columns:
         games_df['genres'] = games_df['genres'].apply(process_genre)
 
-    games_df['description'] = games_df['about_the_game'].fillna(
+    # Use short_descriptions instead of about_the_game/detailed_description for games
+    games_df['description'] = games_df['short_description'].fillna(
+        games_df['about_the_game']).fillna(
         games_df['detailed_description'])
     games_clean = games_df[['name', 'description', 'genres']].rename(
         columns={'name': 'title', 'genres': 'genre'}
