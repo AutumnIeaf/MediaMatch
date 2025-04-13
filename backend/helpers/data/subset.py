@@ -15,11 +15,17 @@ movies_sample = movies_df    # All movies
 games_sample = games_df      # All games
 
 # Add a 'media_type' column to each dataset
-books_sample['media_type'] = 'book'
-movies_sample['media_type'] = 'movie'
-games_sample['media_type'] = 'game'
+books_sample['media_type'] = 'Book'
+movies_sample['media_type'] = 'Movie'
+games_sample['media_type'] = 'Game'
 
-# Select and rename relevant columns for books and movies
+# Clean and capitalize categories for books
+if 'categories' in books_sample.columns:
+    books_sample['categories'] = books_sample['categories'].apply(
+        lambda x: x.title() if isinstance(x, str) else x
+    )
+
+# Create final books DataFrame
 books_final = books_sample[['book_name', 'summaries', 'categories', 'media_type']].rename(
     columns={'book_name': 'title', 'summaries': 'description', 'categories': 'genre'}
 )
