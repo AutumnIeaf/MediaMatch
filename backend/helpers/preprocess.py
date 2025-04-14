@@ -6,8 +6,7 @@ import json
 import torch
 from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import TruncatedSVD
-from scipy.sparse import csr_matrix
+from sklearn.decomposition import TruncatedSVD, PCA
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -29,22 +28,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def process_genre(genre):
-    """
-    Process genre field which can be:
-    1. A list of dicts with 'id' and 'description' keys
-    2. A string representation of a list of dicts (like "[{'id': '1', 'description': 'Action'}]")
-    3. A string with genre name
-    """
-    # If it's already a list of dicts
     if isinstance(genre, list) and len(genre) > 0:
         if isinstance(genre[0], dict) and 'description' in genre[0]:
             return genre[0]['description']
         return str(genre[0])
 
-    # If it's a string representation of a list
     if isinstance(genre, str) and genre.startswith('[') and genre.endswith(']'):
         try:
-            # Try to parse as JSON
             import ast
             parsed = ast.literal_eval(genre)
             if isinstance(parsed, list) and len(parsed) > 0:
@@ -54,7 +44,6 @@ def process_genre(genre):
         except:
             pass
 
-    # Otherwise just return as is
     return genre
 
 
@@ -84,11 +73,9 @@ def load_and_clean_data():
     )
     movies_clean['media_type'] = 'movie'
 
-    # Process games genres with our new function
     if 'genres' in games_df.columns:
         games_df['genres'] = games_df['genres'].apply(process_genre)
 
-    # Use short_descriptions instead of about_the_game/detailed_description for games
     games_df['description'] = games_df['short_description'].fillna(
         games_df['about_the_game']).fillna(
         games_df['detailed_description'])
@@ -109,9 +96,6 @@ def load_and_clean_data():
 
 
 def preprocess_text(text):
-    """
-    Preprocess text with error handling for tokenization
-    """
     if not isinstance(text, str) or not text:
         return ""
 
@@ -133,9 +117,6 @@ def preprocess_text(text):
 
 
 def create_tfidf_svd_embeddings(df, n_components=300):
-    """
-    Create TF-IDF embeddings and apply SVD dimensionality reduction
-    """
     print("Creating TF-IDF embeddings with SVD...")
 
     df['combined_text'] = df['title'] + ". " + df['description']
@@ -173,9 +154,6 @@ def create_tfidf_svd_embeddings(df, n_components=300):
 
 
 def mean_pooling(model_output, attention_mask):
-    """
-    Mean pooling to get sentence embeddings from BERT token embeddings
-    """
     token_embeddings = model_output[0]
     input_mask_expanded = attention_mask.unsqueeze(
         -1).expand(token_embeddings.size()).float()
@@ -183,9 +161,6 @@ def mean_pooling(model_output, attention_mask):
 
 
 def create_bert_embeddings(df, batch_size=16, max_length=512):
-    """
-    Create embeddings using BERT model
-    """
     print("Creating BERT embeddings...")
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -216,27 +191,13 @@ def create_bert_embeddings(df, batch_size=16, max_length=512):
 
     df['bert_embedding'] = embeddings
 
-    with open('models/bert_embeddings.pkl', 'wb') as f:
-        pickle.dump({
-            'model_name': 'sentence-transformers/all-MiniLM-L6-v2',
-            'embedding_dim': len(embeddings[0])
-        }, f)
-
     return df
 
 
 def create_combined_embeddings(df, alpha=0.5):
-    """
-    Create combined embeddings by concatenating and applying dimensionality reduction
-    to TF-IDF+SVD and BERT embeddings
-    """
-    print("Creating combined embeddings...")
-
     tfidf_svd_dim = len(df['tfidf_svd_embedding'].iloc[0])
     bert_dim = len(df['bert_embedding'].iloc[0])
     print(f"Dimensions - TF-IDF+SVD: {tfidf_svd_dim}, BERT: {bert_dim}")
-
-    from sklearn.decomposition import PCA
 
     combined_embeddings = []
     all_concatenated = []
@@ -269,67 +230,19 @@ def create_combined_embeddings(df, alpha=0.5):
     return df
 
 
-def load_from_combined_json():
-    with open('data/mediamatch_combined.json', 'r') as f:
-        combined_data = json.load(f)
-
-    combined_df = pd.DataFrame(combined_data)
-    combined_df['description'] = combined_df['description'].fillna('')
-    combined_df['genre'] = combined_df['genre'].fillna('')
-    combined_df = combined_df[combined_df['description'].str.len() > 5]
-
-    return combined_df
-
-
 def save_final_embeddings(df):
-    """
-    Save the final dataframe with all embeddings
-    """
     save_df = df[['title', 'description', 'genre',
                   'media_type', 'combined_embedding']]
 
     with open('models/final_embeddings.pkl', 'wb') as f:
         pickle.dump(save_df, f)
 
-    with open('models/all_embeddings.pkl', 'wb') as f:
-        pickle.dump(df, f)
-
     print(f"Saved embeddings for {len(df)} items")
 
 
-def find_recommendations(item_id, df, n=10):
-    """
-    Find recommendations for a given item using combined embeddings
-    """
-    target_embedding = np.array(df.loc[item_id, 'combined_embedding'])
-
-    similarities = []
-    for idx, row in df.iterrows():
-        if idx != item_id:
-            emb = np.array(row['combined_embedding'])
-            similarity = 1 - cosine(target_embedding, emb)
-            similarities.append((idx, similarity))
-
-    similarities.sort(key=lambda x: x[1], reverse=True)
-
-    recommendations = []
-    for idx, sim in similarities[:n]:
-        recommendations.append({
-            'title': df.loc[idx, 'title'],
-            'media_type': df.loc[idx, 'media_type'],
-            'similarity': sim
-        })
-
-    return recommendations
-
-
 if __name__ == "__main__":
-    use_combined_json = False
 
-    if use_combined_json:
-        combined_df = load_from_combined_json()
-    else:
-        combined_df = load_and_clean_data()
+    combined_df = load_and_clean_data()
 
     combined_df, vectorizer, svd = create_tfidf_svd_embeddings(
         combined_df, n_components=300)
